@@ -1,0 +1,4 @@
+Time 0 | Used Memory: 40 KB
+Time 50 | Used Memory: 50 KB
+Time 144 | Used Memory: 40 KB
+Time 382 | Used Memory: 0 KB

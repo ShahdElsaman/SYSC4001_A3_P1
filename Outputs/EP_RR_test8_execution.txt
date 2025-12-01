@@ -1,0 +1,20 @@
++-----------------------------------------------+
+|Time of Transition |PID |-Old State |-New State |
++-----------------------------------------------+
+|                 0 | 11 |       NEW |     READY |
+|                 0 | 11 |     READY |   RUNNING |
+|               104 | 11 |   RUNNING |     READY |
+|               110 | 11 |     READY |   RUNNING |
+|               150 |  2 |       NEW |     READY |
+|               214 | 11 |   RUNNING |     READY |
+|               220 |  2 |     READY |   RUNNING |
+|               304 |  2 |   RUNNING |TERMINATED |
+|               310 | 11 |     READY |   RUNNING |
+|               364 | 11 |   RUNNING |TERMINATED |
++-----------------------------------------------+
+
+=== EP + RR Metrics ===
+Throughput: 0.00547945 processes/ms
+Average Waiting Time: 86 ms
+Average Turnaround Time: 260 ms
+Average Response Time: 35 ms

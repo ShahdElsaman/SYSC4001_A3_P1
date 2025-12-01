@@ -1,0 +1,60 @@
++-----------------------------------------------+
+|Time of Transition |PID |-Old State |-New State |
++-----------------------------------------------+
+|                 0 |  1 |       NEW |     READY |
+|                 0 |  1 |     READY |   RUNNING |
+|                10 |  2 |       NEW |     READY |
+|                20 |  3 |       NEW |     READY |
+|                40 |  4 |       NEW |     READY |
+|                54 |  1 |   RUNNING |   WAITING |
+|                60 |  2 |     READY |   RUNNING |
+|                94 |  1 |   WAITING |     READY |
+|               104 |  2 |   RUNNING |   WAITING |
+|               110 |  3 |     READY |   RUNNING |
+|               134 |  2 |   WAITING |     READY |
+|               174 |  3 |   RUNNING |   WAITING |
+|               180 |  4 |     READY |   RUNNING |
+|               209 |  3 |   WAITING |     READY |
+|               284 |  4 |   RUNNING |     READY |
+|               290 |  1 |     READY |   RUNNING |
+|               344 |  1 |   RUNNING |   WAITING |
+|               350 |  2 |     READY |   RUNNING |
+|               384 |  1 |   WAITING |     READY |
+|               394 |  2 |   RUNNING |   WAITING |
+|               400 |  3 |     READY |   RUNNING |
+|               424 |  2 |   WAITING |     READY |
+|               464 |  3 |   RUNNING |   WAITING |
+|               470 |  4 |     READY |   RUNNING |
+|               499 |  3 |   WAITING |     READY |
+|               574 |  4 |   RUNNING |TERMINATED |
+|               580 |  1 |     READY |   RUNNING |
+|               634 |  1 |   RUNNING |   WAITING |
+|               640 |  2 |     READY |   RUNNING |
+|               674 |  1 |   WAITING |     READY |
+|               684 |  2 |   RUNNING |   WAITING |
+|               690 |  3 |     READY |   RUNNING |
+|               714 |  2 |   WAITING |     READY |
+|               754 |  3 |   RUNNING |   WAITING |
+|               760 |  1 |     READY |   RUNNING |
+|               789 |  3 |   WAITING |     READY |
+|               814 |  1 |   RUNNING |   WAITING |
+|               820 |  2 |     READY |   RUNNING |
+|               854 |  1 |   WAITING |     READY |
+|               864 |  2 |   RUNNING |   WAITING |
+|               870 |  3 |     READY |   RUNNING |
+|               894 |  2 |   WAITING |     READY |
+|               934 |  3 |   RUNNING |   WAITING |
+|               940 |  1 |     READY |   RUNNING |
+|               969 |  3 |   WAITING |     READY |
+|               994 |  1 |   RUNNING |TERMINATED |
+|              1000 |  2 |     READY |   RUNNING |
+|              1024 |  2 |   RUNNING |TERMINATED |
+|              1030 |  3 |     READY |   RUNNING |
+|              1094 |  3 |   RUNNING |TERMINATED |
++-----------------------------------------------+
+
+=== RR Metrics ===
+Throughput: 0.00365297 processes/ms
+Average Waiting Time: 549.5 ms
+Average Turnaround Time: 905 ms
+Average Response Time: 70 ms
