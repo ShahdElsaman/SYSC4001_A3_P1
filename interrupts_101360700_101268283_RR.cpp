@@ -5,13 +5,15 @@
 
 #include "interrupts_101360700_101268283.hpp"
 
-// RR simulation
+// RR SIMULATION 
+
 std::tuple<std::string, std::string>
 run_simulation(std::vector<PCB> list_processes) {
 
     std::vector<PCB> ready_queue;
     std::vector<PCB> wait_queue;
     std::vector<PCB> job_list;
+    std::vector<PCB> input_processes = list_processes;
 
     unsigned int current_time    = 0;
     const unsigned int QUANTUM   = 100;
@@ -23,43 +25,54 @@ run_simulation(std::vector<PCB> list_processes) {
     std::string execution_status = print_exec_header();
     std::string memory_log;
 
-    // main simualtion loop
-    while (!all_process_terminated(job_list) ||
-           job_list.empty() ||          // <-- important: start even when no jobs yet
+    // main simulation loop
+    while (!input_processes.empty() ||
+           !all_process_terminated(job_list) ||
            !ready_queue.empty() ||
            !wait_queue.empty() ||
            running.PID != -1) {
 
-        // process arrival 
-        for (auto &process : list_processes) {
-            if (process.arrival_time == current_time) {
+        // 1) Process arrivals (NEW -> READY when memory available)
+        for (auto it = input_processes.begin(); it != input_processes.end(); ) {
 
-                if (assign_memory(process)) {
+            if (it->arrival_time == current_time) {
 
-                    process.state = READY;
-                    process.last_ready_time = current_time;
+                if (assign_memory(*it)) {
 
-                    ready_queue.push_back(process);
-                    job_list.push_back(process);
+                    it->state           = READY;
+                    it->start_time      = -1;
+                    it->remaining_time  = it->processing_time;
+                    it->last_ready_time = current_time;
+
+                    ready_queue.push_back(*it);
+                    job_list.push_back(*it);
 
                     execution_status += print_exec_status(
-                        current_time, process.PID, NEW, READY);
+                        current_time, it->PID, NEW, READY);
 
-                    // save memory status after arrival
+                    // log memory state when a process starts
                     memory_log += memory_status(current_time, job_list);
+
+                    it = input_processes.erase(it);
                 }
+                else {
+                    // not enough memory yet, try again later
+                    ++it;
+                }
+            }
+            else {
+                ++it;
             }
         }
 
-        // wait queue 
+        // 2) Manage the wait queue (I/O completion: WAITING -> READY)
         for (auto it = wait_queue.begin(); it != wait_queue.end(); ) {
 
-            it->remaining_io_time--;
-
-            if (it->remaining_io_time == 0) {
+            // remaining_io_time = absolute completion time
+            if (it->remaining_io_time <= current_time) {
 
                 states old_state = it->state;
-                it->state = READY;
+                it->state        = READY;
                 it->last_ready_time = current_time;
 
                 ready_queue.push_back(*it);
@@ -75,15 +88,16 @@ run_simulation(std::vector<PCB> list_processes) {
             }
         }
 
-        // dispatch (if the cpu is idle)
+        // 3) Dispatch: if CPU is idle and we have READY processes
         if (running.PID == -1 && !ready_queue.empty()) {
 
             PCB next = ready_queue.front();
             ready_queue.erase(ready_queue.begin());
 
-            next.total_wait_time +=
-                (current_time - next.last_ready_time);
+            // accumulate wait time
+            next.total_wait_time += (current_time - next.last_ready_time);
 
+            states old_state = next.state;
             next.state = RUNNING;
 
             if (next.start_time == -1)
@@ -95,98 +109,97 @@ run_simulation(std::vector<PCB> list_processes) {
             quantum_counter = 0;
 
             execution_status += print_exec_status(
-                current_time, running.PID, READY, RUNNING);
-
-            simulate_interrupt_overhead(current_time);
+                current_time, running.PID, old_state, RUNNING);
         }
 
-        // cpu execution 
+        // 4) CPU execution (1 ms)
         if (running.PID != -1) {
 
+            // one ms of CPU
             running.remaining_time--;
             quantum_counter++;
 
-            int cpu_used =
+            unsigned int cpu_used =
                 running.processing_time - running.remaining_time;
 
             bool did_transition = false;
 
-            // I/O interrupt 
+            // 4a) I/O interrupt
             if (running.io_freq > 0 &&
                 cpu_used > 0 &&
-                cpu_used % running.io_freq == 0 &&
+                (cpu_used % running.io_freq == 0) &&
                 running.remaining_time > 0) {
 
                 states old_state = running.state;
 
                 running.state = WAITING;
-                running.remaining_io_time = running.io_duration;
+                // absolute completion time: after this ms + io_duration
+                running.remaining_io_time =
+                    current_time + 1 + running.io_duration;
 
                 wait_queue.push_back(running);
                 sync_queue(job_list, running);
 
                 execution_status += print_exec_status(
-                    current_time, running.PID, old_state, WAITING);
+                    current_time + 1, running.PID, old_state, WAITING);
 
                 idle_CPU(running);
                 quantum_counter = 0;
-
-                simulate_interrupt_overhead(current_time);
                 did_transition = true;
             }
 
-            // process termination 
+            // 4b) Process termination
             if (!did_transition &&
-                running.PID != -1 &&
                 running.remaining_time == 0) {
 
+                states old_state = running.state;
                 running.state = TERMINATED;
                 running.completion_time = current_time + 1;
 
                 execution_status += print_exec_status(
-                    current_time, running.PID, RUNNING, TERMINATED);
+                    current_time + 1, running.PID, old_state, TERMINATED);
 
                 terminate_process(running, job_list);
 
-                // save memory status after termination
-                memory_log += memory_status(current_time, job_list);
+                // log memory after termination
+                memory_log += memory_status(current_time + 1, job_list);
 
                 idle_CPU(running);
                 quantum_counter = 0;
-
-                simulate_interrupt_overhead(current_time);
                 did_transition = true;
             }
 
-            // RR
+            // 4c) Round Robin quantum expiry
             if (!did_transition &&
-                running.PID != -1 &&
                 quantum_counter == QUANTUM) {
 
                 states old_state = running.state;
 
-                running.state = READY;
-                running.last_ready_time = current_time;
+                running.state        = READY;
+                running.last_ready_time = current_time + 1;
 
                 ready_queue.push_back(running);
                 sync_queue(job_list, running);
 
                 execution_status += print_exec_status(
-                    current_time, running.PID, old_state, READY);
+                    current_time + 1, running.PID, old_state, READY);
 
                 idle_CPU(running);
                 quantum_counter = 0;
-
-                simulate_interrupt_overhead(current_time);
+            }
+            else if (!did_transition) {
+                // still running, update job_list
+                sync_queue(job_list, running);
             }
         }
 
+        // advance time by 1 ms
         current_time++;
     }
 
     execution_status += print_exec_footer();
 
-    // METRICS CALCULATION
+    // 5) METRICS CALCULATION
     unsigned int n = job_list.size();
     double total_wait = 0, total_turnaround = 0, total_response = 0;
     unsigned int finish_time = 0;
@@ -235,7 +248,8 @@ run_simulation(std::vector<PCB> list_processes) {
     return std::make_tuple(execution_status, memory_log);
 }
 
-// MAIN
+//MAIN 
+
 int main(int argc, char** argv) {
 
     if (argc != 2) {
@@ -253,6 +267,7 @@ int main(int argc, char** argv) {
     std::string line;
 
     while (std::getline(input_file, line)) {
+        if (line.empty()) continue;
         auto tokens = split_delim(line, ", ");
         auto p = add_process(tokens);
         list_process.push_back(p);
