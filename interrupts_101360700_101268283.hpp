@@ -69,11 +69,11 @@ struct PCB{
     unsigned int    io_freq;
     unsigned int    io_duration;
 
-    // --------- ADDED FOR FULL SIMULATOR ---------
+    //ADDED FOR FULL SIMULATOR
     unsigned int    remaining_io_time;   // for WAITING state
     int             priority;            // for priority scheduling
 
-    // --------- METRICS TRACKING ---------
+    //METRICS TRACKING 
     unsigned int    completion_time;
     unsigned int    total_wait_time;
     unsigned int    last_ready_time;

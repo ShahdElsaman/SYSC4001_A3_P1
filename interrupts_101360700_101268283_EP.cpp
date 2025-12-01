@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
     }
     input_file.close();
 
-    auto [exec] = run_simulation(list_processes);
+    auto [exec] = run_simulation(list_process);
     write_output(exec, "execution.txt");
 
     return 0;
